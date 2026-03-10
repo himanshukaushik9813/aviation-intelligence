@@ -1,13 +1,13 @@
 "use client";
 
-import { Github, Linkedin, Mail, Heart } from "lucide-react";
+import { GitBranch, Mail, Heart } from "lucide-react";
 
 export function Footer() {
   return (
     <footer className="border-t border-white/[0.05] bg-[#050B1A]/80 backdrop-blur-sm">
       <div className="px-6 py-4">
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-          {/* Built by Badge */}
+        {/* Built by Badge - Centered */}
+        <div className="flex flex-col items-center gap-4">
           <div className="flex items-center gap-2 text-sm">
             <span className="text-slate-500">Built with</span>
             <Heart className="h-3.5 w-3.5 text-red-400 fill-red-400 animate-pulse" />
@@ -31,8 +31,8 @@ export function Footer() {
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-white/[0.05] bg-white/[0.02] hover:bg-white/[0.05] hover:border-cyan-500/30 transition-all text-xs text-slate-400 hover:text-cyan-400"
               title="View on GitHub"
             >
-              <Github className="h-3.5 w-3.5" />
-              <span className="hidden sm:inline">GitHub</span>
+              <GitBranch className="h-3.5 w-3.5" />
+              <span>GitHub</span>
             </a>
             <a
               href="mailto:himanshukaushik9813@gmail.com"
@@ -40,15 +40,15 @@ export function Footer() {
               title="Email"
             >
               <Mail className="h-3.5 w-3.5" />
-              <span className="hidden sm:inline">Contact</span>
+              <span>Contact</span>
             </a>
           </div>
-        </div>
 
-        {/* Project Info */}
-        <div className="mt-3 pt-3 border-t border-white/[0.03] flex flex-col sm:flex-row items-center justify-between gap-2 text-[11px] text-slate-600">
-          <p>Aviation Disruption Intelligence Platform © 2024</p>
-          <p className="font-mono">ML-Powered Flight Analytics</p>
+          {/* Project Info */}
+          <div className="pt-3 border-t border-white/[0.03] w-full flex flex-col items-center gap-1 text-[11px] text-slate-600">
+            <p>Aviation Disruption Intelligence Platform © 2024</p>
+            <p className="font-mono">ML-Powered Flight Analytics</p>
+          </div>
         </div>
       </div>
     </footer>
