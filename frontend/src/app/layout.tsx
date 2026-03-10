@@ -3,6 +3,7 @@ import { Space_Grotesk, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "sonner";
 import { Sidebar } from "@/components/dashboard/sidebar";
+import { Footer } from "@/components/dashboard/footer";
 
 const spaceGrotesk = Space_Grotesk({
   variable: "--font-inter",
@@ -31,11 +32,14 @@ export default function RootLayout({
       <body
         className={`${spaceGrotesk.variable} ${jetbrains.variable} font-sans antialiased bg-[#050B1A] text-slate-200 min-h-screen`}
       >
-        <div className="flex min-h-screen relative z-10">
-          <Sidebar />
-          <main className="flex-1 ml-[72px] min-h-screen">
-            {children}
-          </main>
+        <div className="flex flex-col min-h-screen relative z-10">
+          <div className="flex flex-1">
+            <Sidebar />
+            <main className="flex-1 ml-[72px]">
+              {children}
+            </main>
+          </div>
+          <Footer />
         </div>
         <Toaster
           theme="dark"
