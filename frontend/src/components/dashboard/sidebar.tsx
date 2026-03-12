@@ -11,6 +11,7 @@ import {
   Route,
   Brain,
   FileText,
+  BookOpen,
   Radar,
   ChevronRight,
 } from "lucide-react";
@@ -24,6 +25,7 @@ const navItems = [
   { label: "Route Disruptions", href: "/routes", icon: Route },
   { label: "Prediction Engine", href: "/prediction", icon: Brain },
   { label: "Reports", href: "/reports", icon: FileText },
+  { label: "How to Use", href: "/guide", icon: BookOpen },
 ];
 
 export function Sidebar() {
