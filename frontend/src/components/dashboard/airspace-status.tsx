@@ -1,6 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
+import { useMemo } from "react";
 import { airspaceZones } from "@/lib/aviation-data";
 import { getStatusColor } from "@/lib/utils";
 import { Shield, AlertTriangle, XOctagon } from "lucide-react";
@@ -8,6 +9,14 @@ import { Shield, AlertTriangle, XOctagon } from "lucide-react";
 export function AirspaceStatus() {
   const closed = airspaceZones.filter((z) => z.status === "closed");
   const restricted = airspaceZones.filter((z) => z.status === "restricted");
+  const sortedZones = useMemo(() => {
+    return [...airspaceZones].sort((a, b) => {
+      const aClosed = a.status === "closed";
+      const bClosed = b.status === "closed";
+      if (aClosed !== bClosed) return aClosed ? -1 : 1;
+      return a.name.localeCompare(b.name);
+    });
+  }, []);
 
   return (
     <motion.div
@@ -24,9 +33,7 @@ export function AirspaceStatus() {
       </div>
 
       <div className="space-y-2">
-        {airspaceZones
-          .sort((a, b) => (a.status === "closed" ? -1 : 1))
-          .map((zone, i) => (
+        {sortedZones.map((zone, i) => (
             <motion.div
               key={zone.id}
               initial={{ opacity: 0, x: -10 }}
