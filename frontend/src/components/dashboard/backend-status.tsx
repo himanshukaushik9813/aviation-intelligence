@@ -1,22 +1,20 @@
 "use client";
 
 import { useBackendHealth } from "@/hooks/useBackendHealth";
-import { Server, Wifi, WifiOff, AlertTriangle, RefreshCw } from "lucide-react";
+import { Server, Wifi, WifiOff, RefreshCw } from "lucide-react";
 import { motion } from "framer-motion";
 
 export function BackendStatus() {
-  const { status, message, lastChecked, backendInfo, refetch } = useBackendHealth(30000);
+  const { status, lastChecked, backendInfo, refetch } = useBackendHealth(5000);
 
   const getStatusColor = () => {
     switch (status) {
-      case "connected":
+      case "online":
         return "text-emerald-400";
-      case "checking":
+      case "reconnecting":
         return "text-yellow-400";
       case "disconnected":
         return "text-red-400";
-      case "error":
-        return "text-orange-400";
       default:
         return "text-slate-400";
     }
@@ -24,14 +22,12 @@ export function BackendStatus() {
 
   const getStatusIcon = () => {
     switch (status) {
-      case "connected":
+      case "online":
         return <Wifi className="h-4 w-4" />;
-      case "checking":
+      case "reconnecting":
         return <RefreshCw className="h-4 w-4 animate-spin" />;
       case "disconnected":
         return <WifiOff className="h-4 w-4" />;
-      case "error":
-        return <AlertTriangle className="h-4 w-4" />;
       default:
         return <Server className="h-4 w-4" />;
     }
@@ -39,14 +35,12 @@ export function BackendStatus() {
 
   const getStatusText = () => {
     switch (status) {
-      case "connected":
-        return "Backend Connected";
-      case "checking":
-        return "Checking...";
+      case "online":
+        return "Backend Online";
+      case "reconnecting":
+        return "Reconnecting...";
       case "disconnected":
-        return "Backend Offline";
-      case "error":
-        return "Connection Error";
+        return "Backend Disconnected";
       default:
         return "Unknown";
     }
@@ -64,7 +58,7 @@ export function BackendStatus() {
         <span className="text-xs font-mono font-medium">{getStatusText()}</span>
       </div>
 
-      {status === "connected" && backendInfo?.service && (
+      {status === "online" && backendInfo?.service && (
         <div className="text-[10px] text-slate-500 font-mono border-l border-white/10 pl-3">
           {backendInfo.service}
         </div>
@@ -80,7 +74,7 @@ export function BackendStatus() {
         </button>
       )}
 
-      {lastChecked && status === "connected" && (
+      {lastChecked && status === "online" && (
         <div className="text-[9px] text-slate-600 font-mono">
           {lastChecked.toLocaleTimeString()}
         </div>

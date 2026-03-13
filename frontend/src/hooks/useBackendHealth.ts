@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
-export type BackendStatus = "checking" | "connected" | "disconnected" | "error";
+export type BackendStatus = "online" | "reconnecting" | "disconnected";
 
 export interface BackendHealthState {
   status: BackendStatus;
@@ -14,72 +14,92 @@ export interface BackendHealthState {
   };
 }
 
-export function useBackendHealth(checkInterval: number = 30000) {
+const DEFAULT_CHECK_INTERVAL_MS = 5000;
+const DISCONNECT_AFTER_FAILURES = 3;
+
+export function useBackendHealth(checkInterval: number = DEFAULT_CHECK_INTERVAL_MS) {
   const [health, setHealth] = useState<BackendHealthState>({
-    status: "checking",
-    message: "Checking backend connection...",
+    status: "reconnecting",
+    message: "Reconnecting to backend...",
     lastChecked: null,
   });
 
-  const checkHealth = async () => {
+  const failureCountRef = useRef(0);
+  const requestIdRef = useRef(0);
+  const controllerRef = useRef<AbortController | null>(null);
+
+  const markFailure = useCallback((checkedAt: Date) => {
+    failureCountRef.current += 1;
+    const status =
+      failureCountRef.current >= DISCONNECT_AFTER_FAILURES ? "disconnected" : "reconnecting";
+
+    setHealth({
+      status,
+      message:
+        status === "disconnected" ? "Backend disconnected" : "Reconnecting to backend...",
+      lastChecked: checkedAt,
+      backendInfo: undefined,
+    });
+  }, []);
+
+  const checkHealth = useCallback(async () => {
+    const requestId = ++requestIdRef.current;
+
+    if (controllerRef.current) {
+      controllerRef.current.abort();
+    }
+
+    const controller = new AbortController();
+    controllerRef.current = controller;
+
     const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000";
+    const healthUrl = new URL("/health", backendUrl);
+    healthUrl.searchParams.set("_ts", Date.now().toString());
+
+    const checkedAt = new Date();
 
     try {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
-
-      const response = await fetch(`${backendUrl}/health`, {
+      const response = await fetch(healthUrl.toString(), {
         method: "GET",
         signal: controller.signal,
+        cache: "no-store",
         headers: {
-          "Content-Type": "application/json",
+          Accept: "application/json",
         },
       });
 
-      clearTimeout(timeoutId);
+      if (requestId !== requestIdRef.current) {
+        return;
+      }
 
       if (response.ok) {
-        const data = await response.json();
+        const data = await response.json().catch(() => ({}));
+        failureCountRef.current = 0;
         setHealth({
-          status: "connected",
-          message: "Backend is running",
-          lastChecked: new Date(),
+          status: "online",
+          message: "Backend online",
+          lastChecked: checkedAt,
           backendInfo: {
             service: data.service,
             version: data.version,
           },
         });
-      } else {
-        setHealth({
-          status: "error",
-          message: `Backend returned status ${response.status}`,
-          lastChecked: new Date(),
-        });
+        return;
       }
+
+      markFailure(checkedAt);
     } catch (error) {
-      if (error instanceof Error) {
-        if (error.name === "AbortError") {
-          setHealth({
-            status: "disconnected",
-            message: "Backend connection timeout",
-            lastChecked: new Date(),
-          });
-        } else {
-          setHealth({
-            status: "disconnected",
-            message: "Backend is not running",
-            lastChecked: new Date(),
-          });
-        }
-      } else {
-        setHealth({
-          status: "error",
-          message: "Unknown error checking backend",
-          lastChecked: new Date(),
-        });
+      if (requestId !== requestIdRef.current) {
+        return;
       }
+
+      if (error instanceof Error && error.name === "AbortError") {
+        return;
+      }
+
+      markFailure(checkedAt);
     }
-  };
+  }, [markFailure]);
 
   useEffect(() => {
     // Initial check
@@ -88,8 +108,13 @@ export function useBackendHealth(checkInterval: number = 30000) {
     // Set up interval for periodic checks
     const interval = setInterval(checkHealth, checkInterval);
 
-    return () => clearInterval(interval);
-  }, [checkInterval]);
+    return () => {
+      clearInterval(interval);
+      if (controllerRef.current) {
+        controllerRef.current.abort();
+      }
+    };
+  }, [checkInterval, checkHealth]);
 
   return { ...health, refetch: checkHealth };
 }
